@@ -1,12 +1,11 @@
 {
-  "name": "ladder",
+  "name": "@djledda/ladder",
   "version": "1.0.0",
   "description": "other libraries provide you with a whole framework - this is just a ladder",
-  "scripts": {  },
-  "repository": {
-    "type": "git",
-    "url": "https://git.djledda.de/djledda/ladder"
-  },
+  "scripts": {},
   "author": "Daniel Ledda <dan.j.ledda@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.7.2"
+  }
 }

@@ -1,8 +1,6 @@
 import { ISubscription } from "./Publisher";
 
-export type MaybeRef<T> = T | Ref<T>;
-
-class RefSubscription implements ISubscription {
+class CapsuleSubscription implements ISubscription {
     private unbindCallback?: () => void;
 
     constructor(unbindCallback: () => void) {
@@ -17,10 +15,10 @@ class RefSubscription implements ISubscription {
 interface Stringable {
     toString(): string;
 }
+type Capsable = Stringable | string | null;
+export type MaybeCapsule<T> = T | Capsule<T>;
 
-type AllowedRef = { toString(): string } | string | null;
-
-export default class Ref<T extends AllowedRef = Stringable> {
+export default class Capsule<T extends Capsable = Capsable> {
     private watchers: Array<(newVal: T) => void> | null = null;
     private afterWatchers: Array<(newVal: T) => void> | null = null;
     private value: T;
@@ -32,11 +30,11 @@ export default class Ref<T extends AllowedRef = Stringable> {
         this.isString = typeof val === "string";
     }
 
-    static new<T extends AllowedRef>(val: MaybeRef<T>): Ref<T> {
-        if (val instanceof Ref) {
+    static new<T extends Capsable>(val: MaybeCapsule<T>): Capsule<T> {
+        if (val instanceof Capsule) {
             return val;
         } else {
-            return new Ref<T>(val);
+            return new Capsule<T>(val);
         }
     }
 
@@ -52,7 +50,7 @@ export default class Ref<T extends AllowedRef = Stringable> {
             }
             this.watchers.push(watcher);
         }
-        return new RefSubscription(() => this.unbind(watcher, !!after));
+        return new CapsuleSubscription(() => this.unbind(watcher, !!after));
     }
 
     private unbind(watcher: (newVal: T) => void, after: boolean): void {

@@ -32,7 +32,6 @@ interface EventSubscriberRecord<T extends LEvent> {
     set<K extends T>(key: K, subscribers: ISubscriber<K>[]): EventSubscriberRecord<T>;
 }
 
-
 export class Publisher<EventType extends LEvent, PublisherType> implements IPublisher<EventType> {
     private subscribers: EventSubscriberRecord<EventType>;
     private parent: PublisherType;
