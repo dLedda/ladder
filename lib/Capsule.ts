@@ -15,10 +15,10 @@ class CapsuleSubscription implements ISubscription {
 interface Stringable {
     toString(): string;
 }
-type Capsable = Stringable | string | null;
+type Captable = Stringable | string | null;
 export type MaybeCapsule<T> = T | Capsule<T>;
 
-export default class Capsule<T extends Capsable = Capsable> {
+export default class Capsule<T extends Captable = Captable> {
     private watchers: Array<(newVal: T) => void> | null = null;
     private afterWatchers: Array<(newVal: T) => void> | null = null;
     private value: T;
@@ -30,7 +30,7 @@ export default class Capsule<T extends Capsable = Capsable> {
         this.isString = typeof val === "string";
     }
 
-    static new<T extends Capsable>(val: MaybeCapsule<T>): Capsule<T> {
+    static new<T extends Captable>(val: MaybeCapsule<T>): Capsule<T> {
         if (val instanceof Capsule) {
             return val;
         } else {
