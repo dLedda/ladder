@@ -82,7 +82,7 @@ export class Publisher<EventType extends LEvent, PublisherType> implements IPubl
 }
 
 export interface IPublisher<T extends LEvent> {
-    addSubscriber(subscriber: ISubscriber<T>, subscribeTo: T | T[]): {unbind: () => void};
+    addSubscriber(subscriber: ISubscriber<T>, subscribeTo: T | T[]): { unbind: () => void };
 }
 
 export interface ISubscription {

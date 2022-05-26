@@ -1,3 +1,5 @@
+import {SubNode} from "./helpers";
+
 export type RungOptions = {};
 
 export default abstract class Rung {
@@ -32,3 +34,5 @@ export default abstract class Rung {
 
     protected abstract build(): HTMLElement;
 }
+
+export type FunctionalRung<Props extends Record<string, any>, N extends Node> = (attributes: Props, subNodes: SubNode[]) => N;

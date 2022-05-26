@@ -1,5 +1,23 @@
 import { ISubscription } from "./Publisher";
 
+export interface Stringable {
+    toString(): string;
+}
+
+export type Captable = Stringable | string | null;
+
+export interface ICapsule<T extends Captable = Captable> {
+    watch(watcher: (newVal: T) => void, after?: boolean): ISubscription;
+    toString(): string;
+    val: T;
+}
+
+export function isCapsule(maybeCapsule: any): maybeCapsule is ICapsule {
+    return Object.prototype.hasOwnProperty.call(maybeCapsule, 'val')
+        && typeof maybeCapsule.watch === "function"
+        && typeof maybeCapsule.toString === "function";
+}
+
 class CapsuleSubscription implements ISubscription {
     private unbindCallback?: () => void;
 
@@ -12,13 +30,7 @@ class CapsuleSubscription implements ISubscription {
     }
 }
 
-interface Stringable {
-    toString(): string;
-}
-type Captable = Stringable | string | null;
-export type MaybeCapsule<T> = T | Capsule<T>;
-
-export default class Capsule<T extends Captable = Captable> {
+export default class Capsule<T extends Captable = Captable> implements ICapsule {
     private watchers: Array<(newVal: T) => void> | null = null;
     private afterWatchers: Array<(newVal: T) => void> | null = null;
     private value: T;
@@ -30,7 +42,7 @@ export default class Capsule<T extends Captable = Captable> {
         this.isString = typeof val === "string";
     }
 
-    static new<T extends Captable>(val: MaybeCapsule<T>): Capsule<T> {
+    static new<T extends Captable>(val: T | Capsule<T>): Capsule<T> {
         if (val instanceof Capsule) {
             return val;
         } else {
@@ -84,12 +96,11 @@ export default class Capsule<T extends Captable = Captable> {
     }
 
     toString(): string {
+        if (this.isString) {
+            return this.value as unknown as string;
+        }
         if (!this.asString) {
-            if (this.isString) {
-                return this.val as unknown as string;
-            } else {
-                this.asString = this.val?.toString() ?? "null";
-            }
+            this.asString = this.val?.toString() ?? "null";
         }
         return this.asString;
     }

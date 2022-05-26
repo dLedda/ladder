@@ -1,12 +1,12 @@
-import Capsule from "./Capsule";
+import {isCapsule, ICapsule} from "./Capsule";
 import {ISubscription} from "./Publisher";
-import Rung from "./Rung";
+import Rung, {FunctionalRung} from "./Rung";
 
-type IRenderAttributes<T extends keyof HTMLElementTagNameMap> = Partial<{
-    [K in keyof HTMLElementTagNameMap[T]]: HTMLElementTagNameMap[T][K] | Capsule<HTMLElementTagNameMap[T][K]>
+export type IRenderAttributes<T extends keyof HTMLElementTagNameMap> = Partial<{
+    [K in keyof HTMLElementTagNameMap[T]]: HTMLElementTagNameMap[T][K] | ICapsule<HTMLElementTagNameMap[T][K]>
 }> & {
     classes?: string[],
-    saveTo?: Capsule<HTMLElementTagNameMap[T] | null>,
+    saveTo?: ICapsule<HTMLElementTagNameMap[T] | null>,
 };
 
 type IdSelector = `#${ string }`;
@@ -32,7 +32,32 @@ export function q(text: string): Text {
     return document.createTextNode(text);
 }
 
-export function h<T extends keyof HTMLElementTagNameMap>(type: T, attributes?: IRenderAttributes<T>, subNodes?: (Rung | Node | Capsule)[]): HTMLElementTagNameMap[T] {
+type InstantiationType = FunctionalRung<any, any> | keyof HTMLElementTagNameMap;
+
+type Props<T> =
+    T extends FunctionalRung<infer Attributes, infer Return>
+        ? Attributes
+        : T extends keyof HTMLElementTagNameMap
+            ? IRenderAttributes<T>
+            : never;
+
+export type SubNode = Rung | Node | ICapsule;
+
+export function h<T extends keyof HTMLElementTagNameMap>(type: T, attributes?: Props<T>, ...subNodes: SubNode[]): HTMLElementTagNameMap[T];
+export function h<T extends FunctionalRung<any, any>, U extends Props<T>, V extends ReturnType<T>>(type: T, attributes?: U, ...subNodes: SubNode[]): V;
+export function h<T extends InstantiationType>(type: T, attributes?: Props<T> | null, ...subNodes: SubNode[]) {
+    if (typeof type === "function") {
+        return type(attributes, subNodes);
+    } else {
+        return createStandardElement(type, attributes ?? {}, subNodes);
+    }
+}
+
+function createStandardElement<T extends keyof HTMLElementTagNameMap>(
+    type: T,
+    attributes: IRenderAttributes<T> | null,
+    subNodes: SubNode[]
+): HTMLElementTagNameMap[T] {
     const element = document.createElement(type);
     if (attributes) {
         if (attributes.classes) {
@@ -43,13 +68,11 @@ export function h<T extends keyof HTMLElementTagNameMap>(type: T, attributes?: I
         }
         applyAttributes(element, attributes);
     }
-    if (subNodes) {
-        attachSubs(element, subNodes);
-    }
+    attachSubs(element, subNodes);
     return element;
 }
 
-function nodeCapsuleWatcher<T>(newVal: T extends Capsule<infer U> ? U : never, textNode: Text, sub: ISubscription): void {
+function nodeCapsuleWatcher<T>(newVal: T extends ICapsule<infer U> ? U : never, textNode: Text, sub: ISubscription): void {
     if (!textNode.parentNode) {
         sub.unbind();
         textNode.remove();
@@ -58,14 +81,14 @@ function nodeCapsuleWatcher<T>(newVal: T extends Capsule<infer U> ? U : never, t
     }
 }
 
-function attachSubs(node: Element | DocumentFragment, subNodes: (Rung | Node | Capsule)[]): void {
+function attachSubs(node: Element | DocumentFragment, subNodes: SubNode[]): void {
     for (let i = 0; i < subNodes.length; i++) {
         const subNode = subNodes[i];
         if (subNode instanceof Rung) {
             node.append(subNode.render());
-        } else if (subNode instanceof Capsule) {
+        } else if (isCapsule(subNode)) {
             const textNode = q(subNode.toString());
-            const sub = subNode.watch((newVal) => nodeCapsuleWatcher<Capsule>(newVal, textNode, sub));
+            const sub = subNode.watch((newVal) => nodeCapsuleWatcher<ICapsule>(newVal, textNode, sub));
             node.append(textNode);
         } else {
             node.append(subNode);
@@ -78,8 +101,8 @@ function applyAttributes<T extends keyof HTMLElementTagNameMap>(element: HTMLEle
         if (Object.prototype.hasOwnProperty.call(attributes, key)) {
             const attribute = (attributes as Record<string, unknown>)[key];
             if (attribute) {
-                if (attribute instanceof Capsule) {
-                    const attributeAsCapsule = attribute as Capsule;
+                if (isCapsule(attribute)) {
+                    const attributeAsCapsule = attribute as ICapsule;
                     const elementWithAttributeKey = element as unknown as Record<string, typeof attributeAsCapsule.val>;
                     elementWithAttributeKey[key] = attributeAsCapsule.val;
                     attribute.watch((newVal) => elementWithAttributeKey[key] = newVal);
