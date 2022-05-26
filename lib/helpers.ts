@@ -2,17 +2,21 @@ import {isCapsule, ICapsule} from "./Capsule";
 import {ISubscription} from "./Publisher";
 import Rung, {FunctionalRung} from "./Rung";
 
-export type IRenderAttributes<T extends keyof HTMLElementTagNameMap> = Partial<{
-    [K in keyof HTMLElementTagNameMap[T]]: HTMLElementTagNameMap[T][K] | ICapsule<HTMLElementTagNameMap[T][K]>
-}> & {
+type CommonRenderAttributes<T> = {
     classes?: string[],
-    saveTo?: ICapsule<HTMLElementTagNameMap[T] | null>,
+    saveTo?: ICapsule<T | null>,
 };
+export type IRenderAttributes<T extends keyof HTMLElementTagNameMap | DocumentFragment> =
+    T extends DocumentFragment
+        ? Partial<{ [K in keyof DocumentFragment]: DocumentFragment[K] | ICapsule<DocumentFragment[K]> }> & CommonRenderAttributes<DocumentFragment>
+        : T extends keyof HTMLElementTagNameMap
+            ? Partial<{
+                    [K in keyof HTMLElementTagNameMap[T]]: HTMLElementTagNameMap[T][K] | ICapsule<HTMLElementTagNameMap[T][K]>
+                }> & CommonRenderAttributes<HTMLElementTagNameMap[T]>
+            : never;
 
-type IdSelector = `#${ string }`;
-
-export function bootstrap(app: Rung, id: IdSelector) {
-    const rootNode = document.querySelector(id);
+export function bootstrap(app: Rung, id: string) {
+    const rootNode = document.getElementById(id);
     if (!rootNode) {
         throw new Error(`No node was found with the id ${id} to attach to`);
     } else {
@@ -20,8 +24,11 @@ export function bootstrap(app: Rung, id: IdSelector) {
     }
 }
 
-export function frag(subs?: Node[]): DocumentFragment {
+export function frag(attributes: IRenderAttributes<DocumentFragment> | null, subs?: SubNode[]): DocumentFragment {
     const frag = document.createDocumentFragment();
+    if (attributes) {
+        applyAttributes(frag, attributes);
+    }
     if (subs) {
         attachSubs(frag, subs);
     }
@@ -32,25 +39,60 @@ export function q(text: string): Text {
     return document.createTextNode(text);
 }
 
-type InstantiationType = FunctionalRung<any, any> | keyof HTMLElementTagNameMap;
+type InstantiationType = FunctionalRung<any, any> | keyof HTMLElementTagNameMap | Rung;
 
 type Props<T> =
     T extends FunctionalRung<infer Attributes, infer Return>
-        ? Attributes
+        ? Attributes & CommonRenderAttributes<Return>
         : T extends keyof HTMLElementTagNameMap
             ? IRenderAttributes<T>
-            : never;
+            : T extends Rung
+                ? CommonRenderAttributes<T>
+                : never;
 
 export type SubNode = Rung | Node | ICapsule;
 
 export function h<T extends keyof HTMLElementTagNameMap>(type: T, attributes?: Props<T>, ...subNodes: SubNode[]): HTMLElementTagNameMap[T];
-export function h<T extends FunctionalRung<any, any>, U extends Props<T>, V extends ReturnType<T>>(type: T, attributes?: U, ...subNodes: SubNode[]): V;
+export function h<T extends FunctionalRung<any, any>, U extends Props<T>>(type: T, attributes?: U, ...subNodes: SubNode[]): ReturnType<T>;
+export function h<T extends Rung>(type: T, attributes: CommonRenderAttributes<T>): ReturnType<T["render"]>;
 export function h<T extends InstantiationType>(type: T, attributes?: Props<T> | null, ...subNodes: SubNode[]) {
     if (typeof type === "function") {
-        return type(attributes, subNodes);
+        return createFunctionalRungElement(type, attributes, subNodes);
+    } else if (type instanceof Rung) {
+        const rendered = type.render();
+        if (attributes?.classes && rendered instanceof HTMLElement) {
+            rendered.classList.add(...attributes.classes);
+        }
+        if (attributes?.saveTo) {
+            attributes.saveTo.val = rendered;
+        }
+        return rendered;
     } else {
         return createStandardElement(type, attributes ?? {}, subNodes);
     }
+}
+
+function createFunctionalRungElement<T extends FunctionalRung<any, any>, U extends Props<T>>(
+    type: T,
+    attributes: U,
+    subNodes: SubNode[]
+): ReturnType<T> {
+    for (let i = 0; i < subNodes.length; i++) {
+        const subNode = subNodes[i];
+        if (isCapsule(subNode)) {
+            const textNode = q(subNode.toString());
+            const sub = subNode.watch((newVal) => nodeCapsuleWatcher<ICapsule>(newVal, textNode, sub));
+            subNodes[i] = textNode;
+        }
+    }
+    const rendered = subNodes.length > 0 ? type(attributes, subNodes) : type(attributes);
+    if (attributes?.classes && rendered instanceof HTMLElement) {
+        rendered.classList.add(...attributes.classes);
+    }
+    if (attributes?.saveTo) {
+        attributes.saveTo.val = rendered;
+    }
+    return rendered;
 }
 
 function createStandardElement<T extends keyof HTMLElementTagNameMap>(
@@ -77,7 +119,7 @@ function nodeCapsuleWatcher<T>(newVal: T extends ICapsule<infer U> ? U : never, 
         sub.unbind();
         textNode.remove();
     } else {
-        textNode.replaceWith(newVal?.toString() ?? q("[dead ref]"));
+        textNode.textContent = newVal?.toString() ?? "[dead ref]";
     }
 }
 
@@ -96,7 +138,9 @@ function attachSubs(node: Element | DocumentFragment, subNodes: SubNode[]): void
     }
 }
 
-function applyAttributes<T extends keyof HTMLElementTagNameMap>(element: HTMLElement, attributes: IRenderAttributes<T>): void {
+function applyAttributes<T extends keyof HTMLElementTagNameMap>(element: HTMLElementTagNameMap[T], attributes: IRenderAttributes<T>): void;
+function applyAttributes(element: DocumentFragment, attributes: IRenderAttributes<DocumentFragment>): void;
+function applyAttributes(element: HTMLElementTagNameMap[keyof HTMLElementTagNameMap] | DocumentFragment, attributes: IRenderAttributes<any>): void {
     for (const key in attributes) {
         if (Object.prototype.hasOwnProperty.call(attributes, key)) {
             const attribute = (attributes as Record<string, unknown>)[key];

@@ -13,7 +13,7 @@ export interface ICapsule<T extends Captable = Captable> {
 }
 
 export function isCapsule(maybeCapsule: any): maybeCapsule is ICapsule {
-    return Object.prototype.hasOwnProperty.call(maybeCapsule, 'val')
+    return typeof maybeCapsule.val !== "undefined"
         && typeof maybeCapsule.watch === "function"
         && typeof maybeCapsule.toString === "function";
 }
