@@ -5,6 +5,7 @@
   "author": "Daniel Ledda <dan.j.ledda@gmail.com>",
   "license": "MIT",
   "main": "index.ts",
+  "repository": "https://github.com/dLedda/ladder.git",
   "keywords": [
     "ui",
     "jsx",
