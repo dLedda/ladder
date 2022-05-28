@@ -5,5 +5,20 @@
   "author": "Daniel Ledda <dan.j.ledda@gmail.com>",
   "license": "MIT",
   "main": "index.ts",
-  "keywords": ["ui", "jsx", "typescript", "ts", "framework", "web", "front-end", "user interface", "hypertext", "component"]
+  "keywords": [
+    "ui",
+    "jsx",
+    "typescript",
+    "ts",
+    "framework",
+    "web",
+    "front-end",
+    "user interface",
+    "hypertext",
+    "component"
+  ],
+  "devDependencies": {
+    "vite": "^2.9.9",
+    "typescript": "^4.7.2"
+  }
 }
