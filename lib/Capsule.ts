@@ -13,7 +13,7 @@ export interface ICapsule<T extends Captable = Captable> {
 }
 
 export function isCapsule(maybeCapsule: any): maybeCapsule is ICapsule {
-    return typeof maybeCapsule.val !== "undefined"
+    return maybeCapsule && typeof maybeCapsule.val !== "undefined"
         && typeof maybeCapsule.watch === "function"
         && typeof maybeCapsule.toString === "function";
 }
@@ -42,8 +42,8 @@ export default class Capsule<T extends Captable = Captable> implements ICapsule 
         this.isString = typeof val === "string";
     }
 
-    static new<T extends Captable>(val: T | Capsule<T>): Capsule<T> {
-        if (val instanceof Capsule) {
+    static new<T extends Captable>(val: T | ICapsule<T>): ICapsule<T> {
+        if (isCapsule(val)) {
             return val;
         } else {
             return new Capsule<T>(val);

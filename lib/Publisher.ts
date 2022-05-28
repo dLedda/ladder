@@ -1,4 +1,4 @@
-import ISubscriber, {LEvent} from "./Subscriber";
+import { ISubscriber, LEvent } from "./Subscriber";
 
 class PublisherSubscription<EventType extends LEvent> implements ISubscription {
     private subscriber: ISubscriber<EventType>;
