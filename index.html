@@ -3,6 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>Ladder Test Playground</title>
+    <style>
+        .rung {
+            width: 30px;
+            height: 30px;
+            border: solid black;
+            border-width: 0 2px 2px 2px;
+        }
+        .rung:last-of-type {
+            border-width: 0 2px 0 2px;
+        }
+        .rung:first-of-type {
+            border-width: 0 2px 2px 2px;
+        }
+    </style>
 </head>
 <body>
     <div id="app"></div>

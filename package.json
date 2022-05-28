@@ -1,12 +1,8 @@
 {
   "name": "@djledda/ladder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "other libraries provide you with a whole framework - this is just a ladder",
-  "scripts": {},
   "author": "Daniel Ledda <dan.j.ledda@gmail.com>",
   "license": "MIT",
-  "devDependencies": {
-    "typescript": "^4.7.2",
-    "vite": "^2.9.9"
-  },
+  "main": "index.ts"
 }

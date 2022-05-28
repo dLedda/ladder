@@ -24,13 +24,17 @@ export function bootstrap(app: Rung, id: string) {
     }
 }
 
-export function frag(attributes: IRenderAttributes<DocumentFragment> | null, subs?: SubNode[]): DocumentFragment {
+export function frag(attributes: IRenderAttributes<DocumentFragment> | null, ...subs: SubNode[]): DocumentFragment {
     const frag = document.createDocumentFragment();
     if (attributes) {
         applyAttributes(frag, attributes);
     }
     if (subs) {
-        attachSubs(frag, subs);
+        if (Array.isArray(subs[0])) {
+            attachSubs(frag, subs[0]);
+        } else {
+            attachSubs(frag, subs);
+        }
     }
     return frag;
 }
@@ -50,7 +54,7 @@ type Props<T> =
                 ? CommonRenderAttributes<T>
                 : never;
 
-export type SubNode = Rung | Node | ICapsule;
+export type SubNode = Rung | Node | ICapsule | string;
 
 export function h<T extends keyof HTMLElementTagNameMap>(type: T, attributes?: Props<T>, ...subNodes: SubNode[]): HTMLElementTagNameMap[T];
 export function h<T extends FunctionalRung<any, any>, U extends Props<T>>(type: T, attributes?: U, ...subNodes: SubNode[]): ReturnType<T>;

@@ -14,10 +14,6 @@ export default abstract class Rung {
         return this.node;
     }
 
-    protected getEl(): Node {
-        return this.render();
-    }
-
     redraw(): void {
         const oldNode = this.node;
         if (!oldNode || !this.node) {

@@ -1,0 +1,7 @@
+node_modules/
+.idea/
+index.html
+test.tsx
+package-lock.json
+tsconfig.json
+.gitignore
