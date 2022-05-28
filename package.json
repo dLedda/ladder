@@ -4,5 +4,6 @@
   "description": "other libraries provide you with a whole framework - this is just a ladder",
   "author": "Daniel Ledda <dan.j.ledda@gmail.com>",
   "license": "MIT",
-  "main": "index.ts"
+  "main": "index.ts",
+  "keywords": ["ui", "jsx", "typescript", "ts", "framework", "web", "front-end", "user interface", "hypertext", "component"]
 }
